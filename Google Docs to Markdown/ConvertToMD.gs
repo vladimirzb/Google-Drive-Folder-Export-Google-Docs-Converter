@@ -3,8 +3,13 @@ function sample1() {
 
   const srcFolderId = "###"; // Please set the folder ID of the folder including Google Documents.
   const dstFolderId = "###"; // Please set the destination folder ID.
+  const suffix = " (Converted from Google Doc)"; // Please set the suffix to add to the file name before the extension.
 
   const token = ScriptApp.getOAuthToken();
+  if (srcFolderId === "###" || dstFolderId === "###") {
+    Logger.log('Please set the source and destination folder IDs.');
+    return;
+  }
   const srcFolder = DriveApp.getFolderById(srcFolderId);
   const dstFolder = DriveApp.getFolderById(dstFolderId);
 
@@ -26,13 +31,13 @@ function sample1() {
   Logger.log('Last processed index: ' + lastProcessedIndex);
 
   // Start copying folder contents from the source to the destination
-  let updatedIndex = copyFolderContents(srcFolder, dstFolder, token, lastProcessedIndex, 0);
+  let updatedIndex = copyFolderContents(srcFolder, dstFolder, suffix, token, lastProcessedIndex, 0);
 
   Logger.log('Process completed. Final index: ' + updatedIndex);
   properties.setProperty('lastProcessedIndex', updatedIndex);
 }
 
-function copyFolderContents(srcFolder, dstFolder, token, lastProcessedIndex, currentIndex) {
+function copyFolderContents(srcFolder, dstFolder, suffix, token, lastProcessedIndex, currentIndex) {
   const files = srcFolder.getFiles();
   const folders = srcFolder.getFolders();
 
@@ -69,7 +74,7 @@ function copyFolderContents(srcFolder, dstFolder, token, lastProcessedIndex, cur
         const url = `https://docs.google.com/feeds/download/documents/export/Export?exportFormat=markdown&id=${documentId}`;
         Logger.log('Converting Google Doc to Markdown: ' + fileName);
         const res = UrlFetchApp.fetch(url, { headers: { authorization: "Bearer " + token } });
-        const blob = res.getBlob().setName(fileName + " (Converted from Google Doc).md").setContentTypeFromExtension();
+        const blob = res.getBlob().setName(fileName + suffix + ".md").setContentTypeFromExtension();
         dstFolder.createFile(blob);
         Logger.log('Converted and copied Google Doc: ' + fileName);
       } catch (error) {
